@@ -141,16 +141,17 @@ export class AvatarDecorationService implements OnApplicationShutdown {
 			body: JSON.stringify({ 'username': user.username }),
 		});
 
-		const userData = await res.json() as Partial<MiUser>;
-		const userAvatarDecorations = userData.avatarDecorations ?? undefined;
+		const userData: any = await res.json();
+		const avatarDecorations = userData.avatarDecorations?.[0];
 
-		if (!userAvatarDecorations || userAvatarDecorations.length === 0) {
+		if (!avatarDecorations) {
 			const updates = {} as Partial<MiUser>;
 			updates.avatarDecorations = [];
 			await this.usersRepository.update({ id: user.id }, updates);
 			return;
 		}
 
+		const avatarDecorationId = avatarDecorations.id;
 		const instanceHost = instance?.host;
 		const decorationApiUrl = `https://${instanceHost}/api/get-avatar-decorations`;
 		const allRes = await this.httpRequestService.send(decorationApiUrl, {
@@ -158,51 +159,42 @@ export class AvatarDecorationService implements OnApplicationShutdown {
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({}),
 		});
-		const allDecorations = await allRes.json() as MiAvatarDecoration[];
-		const updates = {} as Partial<MiUser>;
-		updates.avatarDecorations = [];
-		for (const avatarDecoration of userAvatarDecorations) {
-			let name;
-			let description;
-			const avatarDecorationId = avatarDecoration.id
-			for (const decoration of allDecorations) {
-				if (decoration.id === avatarDecorationId) {
-					name = decoration.name;
-					description = decoration.description;
-					break;
-				}
+		const allDecorations: any = await allRes.json();
+		let name;
+		let description;
+		for (const decoration of allDecorations) {
+			if (decoration.id === avatarDecorationId) {
+				name = decoration.name;
+				description = decoration.description;
+				break;
 			}
-			const existingDecoration = await this.avatarDecorationsRepository.findOneBy({
-				host: userHost,
-				remoteId: avatarDecorationId,
-			});
-			const decorationData = {
-				name: name,
-				description: description,
-				url: this.getProxiedUrl(avatarDecoration.url, 'static'),
-				remoteId: avatarDecorationId,
-				host: userHost,
-			};
-			if (existingDecoration == null) {
-				await this.create(decorationData);
-				this.cacheWithRemote.delete();
-			} else {
-				await this.update(existingDecoration.id, decorationData);
-				this.cacheWithRemote.delete();
-			}
-			const findDecoration = await this.avatarDecorationsRepository.findOneBy({
-				host: userHost,
-				remoteId: avatarDecorationId
-			});
-
-			updates.avatarDecorations.push({
-				id: findDecoration?.id ?? '',
-				angle: avatarDecoration.angle ?? 0,
-				flipH: avatarDecoration.flipH ?? false,
-				offsetX: avatarDecoration.offsetX ?? 0,
-				offsetY: avatarDecoration.offsetY ?? 0,
-			});
 		}
+		const existingDecoration = await this.avatarDecorationsRepository.findOneBy({
+			host: userHost,
+			remoteId: avatarDecorationId,
+		});
+		const decorationData = {
+			name: name,
+			description: description,
+			url: this.getProxiedUrl(avatarDecorations.url, 'static'),
+			remoteId: avatarDecorationId,
+			host: userHost,
+		};
+		if (existingDecoration == null) {
+			await this.create(decorationData);
+		} else {
+			await this.update(existingDecoration.id, decorationData);
+		}
+		const findDecoration = await this.avatarDecorationsRepository.findOneBy({
+			host: userHost,
+			remoteId: avatarDecorationId
+		});
+		const updates = {} as Partial<MiUser>;
+		updates.avatarDecorations = [{
+			id: findDecoration?.id ?? '',
+			angle: avatarDecorations.angle ?? 0,
+			flipH: avatarDecorations.flipH ?? false,
+		}];
 		await this.usersRepository.update({ id: user.id }, updates);
 	}
 
@@ -230,7 +222,7 @@ export class AvatarDecorationService implements OnApplicationShutdown {
 		if (!withRemote) {
 			return this.cache.fetch(() => this.avatarDecorationsRepository.find({ where: { host: IsNull() } }));
 		} else {
-			return this.cacheWithRemote.fetch(() => this.avatarDecorationsRepository.find());
+			return this.cache.fetch(() => this.avatarDecorationsRepository.find());
 		}
 	}
 
