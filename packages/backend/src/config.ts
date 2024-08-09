@@ -129,6 +129,14 @@ export type Config = {
 		index: string;
 		scope?: 'local' | 'global' | string[];
 	} | undefined;
+	skebStatus: {
+		method: string;
+		endpoint: string;
+		headers: { [x: string]: string };
+		parameters: { [x: string]: string };
+		userIdParameterName: string;
+		roleId: string;
+	} | undefined;
 	proxy: string | undefined;
 	proxySmtp: string | undefined;
 	proxyBypassHosts: string[] | undefined;
