@@ -775,14 +775,14 @@ export class ApInboxService {
 		} else if (getApType(object) === 'Note') {
 			await this.updateNote(resolver, actor, object, false, activity);
 			return 'ok: Note updated';
-		} else if (additionalCc && isPost(object)) {
+		} else if (isPost(object) && object.additionalCc) {
 			const uri = getApId(object);
 			const unlock = await this.appLockService.getApLock(uri);
 
 			try {
 				const exist = await this.apNoteService.fetchNote(object);
-				if (exist && !await this.noteEntityService.isVisibleForMe(exist, additionalCc)) {
-					await this.noteCreateService.appendNoteVisibleUser(actor, exist, additionalCc);
+				if (exist && !await this.noteEntityService.isVisibleForMe(exist, object.additionalCc as string)) {
+					await this.noteCreateService.appendNoteVisibleUser(actor, exist, object.additionalCc as string);
 					return 'ok: note visible user appended';
 				} else {
 					return 'skip: nothing to do';

@@ -16,9 +16,9 @@ const WHITE = false;
 export type MapCell = 'null' | 'empty';
 
 export type Options = {
-	isLlotheo: boolean;
-	canPutEverywhere: boolean;
-	loopedBoard: boolean;
+	isLlotheo?: boolean;
+	canPutEverywhere?: boolean;
+	loopedBoard?: boolean;
 };
 
 export type Undo = {
@@ -123,12 +123,12 @@ export class Game {
 		// ターン計算
 		this.turn =
 			this.canPutSomewhere(!this.prevColor) ? !this.prevColor :
-			this.canPutSomewhere(this.prevColor!) ? this.prevColor :
+			this.canPutSomewhere(this.prevColor as Color) ? this.prevColor :
 			null;
 	}
 
 	public undo() {
-		const undo = this.logs.pop()!;
+		const undo = this.logs.pop() as Undo;
 		this.prevColor = undo.color;
 		this.prevPos = undo.pos;
 		this.board[undo.pos] = null;

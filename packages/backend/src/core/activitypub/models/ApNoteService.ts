@@ -352,13 +352,11 @@ export class ApNoteService {
 
 		const note = object as IPost;
 
-		if (note.attributedTo == null)
-			throw new Error('invalid note.attributedTo' + note.attributedTo);
+		if (note.attributedTo == null) throw new Error('invalid note.attributedTo' + note.attributedTo);
 
 		const actor = await this.apPersonService
 		.resolvePerson(getOneApId(note.attributedTo), resolver) as MiRemoteUser;
-		if (actor.isSuspended)
-			throw new Error('actor has been suspended');
+		if (actor.isSuspended) throw new Error('actor has been suspended');
 
 		const files: MiDriveFile[] = [];
 
@@ -371,11 +369,11 @@ export class ApNoteService {
 		const cw = note.summary === '' ? null : note.summary;
 
 		let text: string | null = null;
-		if (note.source?.mediaType === 'text/x.misskeymarkdown' && typeof note.source.content === 'string') {
+		if (note.source?.mediaType === 'text/x.misskeymarkdown') {
 			text = note.source.content;
-		} else if (typeof note._misskey_content !== undefined) {
-			text = note._misskey_content ?? null;
-		} else if (typeof note.content === 'string') {
+		} else if (note._misskey_content) {
+			text = note._misskey_content;
+		} else if (note.content) {
 			text = this.apMfmService.htmlToMfm(note.content, note.tag);
 		}
 

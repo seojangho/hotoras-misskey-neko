@@ -81,8 +81,9 @@ export class NoteUpdateService implements OnApplicationShutdown {
         if (data.updatedAt == null) data.updatedAt = new Date();
 
         if (data.text) {
-            if (data.text.length > DB_MAX_NOTE_TEXT_LENGTH)
+            if (data.text.length > DB_MAX_NOTE_TEXT_LENGTH) {
                 data.text = data.text.slice(0, DB_MAX_NOTE_TEXT_LENGTH);
+            }
             data.text = data.text.trim();
         } else {
             data.text = null;
@@ -151,7 +152,7 @@ export class NoteUpdateService implements OnApplicationShutdown {
                         if ((old_poll && old_poll.choices.toString() !== data.poll?.choices.toString())
                         || (old_poll && old_poll.multiple !== data.poll?.multiple)) {
                             await transactionalEntityManager.delete(MiPoll, { noteId: note.id });
-                            const poll = new MiPoll ({
+                            const poll = new MiPoll({
                                 noteId: note.id,
                                 choices: data.poll!.choices,
                                 expiresAt: data.poll!.expiresAt,
@@ -171,7 +172,7 @@ export class NoteUpdateService implements OnApplicationShutdown {
                     await transactionalEntitymanager.update(MiNote, { id: note.id }, values);
 
                     if (values.hasPoll) {
-                        const poll = new MiPoll ({
+                        const poll = new MiPoll({
                             noteId: note.id,
                             choices: data.poll!.choices,
                             expiresAt: data.poll!.expiresAt,
@@ -190,8 +191,9 @@ export class NoteUpdateService implements OnApplicationShutdown {
                 await this.db.transaction(async transactionalEntityManager => {
                     await transactionalEntityManager.update(MiNote, { id: note.id }, values);
 
-                    if(!values.hasPoll)
+                    if (!values.hasPoll) {
                         await transactionalEntityManager.delete(MiPoll, { noteId: note.id });
+                    }
                 });
             } else {
                 await this.notesRepository.update({ id: note.id }, values);

@@ -852,6 +852,11 @@ export class NoteCreateService implements OnApplicationShutdown {
 	}
 
 	@bindThis
+	public async appendNoteVisibleUser(actor: MiRemoteUser, note: MiNote, cc: string) {
+		//todo
+	}
+
+	@bindThis
 	private async pushToTl(note: MiNote, user: { id: MiUser['id']; host: MiUser['host']; }) {
 		const meta = await this.metaService.fetch();
 		if (!meta.enableFanoutTimeline) return;

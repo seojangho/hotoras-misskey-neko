@@ -16,6 +16,7 @@ export interface IObject {
 	published?: string;
 	updated?: string;
 	cc?: ApObject;
+	additionalCc?: ApObject,
 	to?: ApObject;
 	attributedTo?: ApObject;
 	attachment?: any[];
