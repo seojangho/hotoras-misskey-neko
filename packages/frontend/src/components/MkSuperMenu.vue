@@ -105,8 +105,10 @@ defineProps<{
 				border-top: none;
 			}
 
-			margin-left: 0;
-			margin-right: 0;
+			& {
+				margin-left: 0;
+				margin-right: 0;
+			}
 
 			> .title {
 				font-size: 1em;

@@ -22,6 +22,13 @@
 		"build": "pnpm build-pre && pnpm -r build && pnpm build-assets",
 		"build-storybook": "pnpm --filter frontend build-storybook",
 		"build-misskey-js-with-types": "pnpm build-pre && pnpm --filter backend... --filter=!misskey-js build && pnpm --filter backend generate-api-json --no-build && ncp packages/backend/built/api.json packages/misskey-js/generator/api.json && pnpm --filter misskey-js update-autogen-code && pnpm --filter misskey-js build && pnpm --filter misskey-js api",
+		"update-misskey-js-and-build": "pnpm build-misskey-js-with-types && pnpm -r build && pnpm build-assets",
+		"update-mjs": "pnpm update-misskey-js-and-build",
+
+		"backend:build": "pnpm build-pre && pnpm --filter backend build",
+		"frontend:build": "pnpm build-pre && pnpm build-storybook && pnpm --filter frontend build && pnpm build-assets",
+		"misskey-js:build": "pnpm build-misskey-js-with-types",
+		
 		"start": "pnpm check:connect && cd packages/backend && node ./built/boot/entry.js",
 		"start:test": "cd packages/backend && cross-env NODE_ENV=test node ./built/boot/entry.js",
 		"init": "pnpm migrate",

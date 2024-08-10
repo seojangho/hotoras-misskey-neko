@@ -124,6 +124,7 @@ export class NoteUpdateService implements OnApplicationShutdown {
     }, note: MiNote, data: Option, tags: string[], emojis: string[]): Promise<MiNote> {
         if (data.updatedAt === null || data.updatedAt === undefined) {
             data.updatedAt = new Date();
+        }
         const updatedAtHistory = note.updatedAtHistory ?? [];
 
         const values = new MiNote({
@@ -206,10 +207,10 @@ export class NoteUpdateService implements OnApplicationShutdown {
 
     @bindThis
     private async postNoteUpdated (note: MiNote, user: {
-        id: MiUser['id'],
-        username: MiUser['username'],
-        host: MiUser['host'],
-        isBot: MiUser['isBot'],
+        id: MiUser['id'];
+        username: MiUser['username'];
+        host: MiUser['host'];
+        isBot: MiUser['isBot'];
     }, silent: boolean) {
 		if (!silent) {
 			if (this.userEntityService.isLocalUser(user)) this.activeUsersChart.write(user);

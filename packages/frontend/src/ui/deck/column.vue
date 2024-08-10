@@ -108,7 +108,7 @@ function getMenu() {
 		icon: 'ti ti-settings',
 		text: i18n.ts._deck.configureColumn,
 		action: async () => {
-			const { canceled, result } = await os.form(props.column.name, {
+			const { canceled, result } = await os.form(props.column.name ?? '', {
 				name: {
 					type: 'string',
 					label: i18n.ts.name,
@@ -123,7 +123,7 @@ function getMenu() {
 				flexible: {
 					type: 'boolean',
 					label: i18n.ts._deck.flexible,
-					default: props.column.flexible,
+					default: props.column.flexible ?? null,
 				},
 			});
 			if (canceled) return;
@@ -328,7 +328,7 @@ function onDrop(ev) {
 			&::-webkit-scrollbar-track {
 				background: transparent;
 			}
-			scrollbar-color: var(--scrollbarHandle) transparent;
+			& { scrollbar-color: var(--scrollbarHandle) transparent; }
 		}
 	}
 
@@ -342,7 +342,7 @@ function onDrop(ev) {
 			&::-webkit-scrollbar-track {
 				background: inherit;
 			}
-			scrollbar-color: var(--scrollbarHandle) transparent;
+			& { scrollbar-color: var(--scrollbarHandle) transparent; }
 		}
 	}
 }
@@ -427,6 +427,6 @@ function onDrop(ev) {
 	&::-webkit-scrollbar-track {
 		background: var(--panel);
 	}
-	scrollbar-color: var(--scrollbarHandle) var(--panel);
+	& { scrollbar-color: var(--scrollbarHandle) var(--panel); }
 }
 </style>

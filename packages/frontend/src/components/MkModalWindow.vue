@@ -98,8 +98,10 @@ defineExpose({
 		--root-margin: 16px;
 	}
 
-	--headerHeight: 46px;
-	--headerHeightNarrow: 42px;
+	& {
+		--headerHeight: 46px;
+		--headerHeightNarrow: 42px;
+	}
 }
 
 .header {
