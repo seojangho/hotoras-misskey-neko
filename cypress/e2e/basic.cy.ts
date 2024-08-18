@@ -50,6 +50,7 @@ describe('After setup instance', () => {
   it('successfully loads', () => {
     cy.visitHome();
   });
+});
 
 describe('After user signup', () => {
 	beforeEach(() => {
