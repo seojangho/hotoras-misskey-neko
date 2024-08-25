@@ -218,8 +218,9 @@ export function getNoteMenu(props: {
 		}).then(({ canceled }) => {
 			if (canceled) return;
 			os.post({ initialNote: appearNote, renote: appearNote.renote, reply: appearNote.reply, channel: appearNote.channel, editMode: true })
-			.then(() => { location.reload(); });
-			// 노트 수정 사항이 바로 반영되지 않는 문제 수정을 위해 일단 넣었습니다. 수정이 되면 강제 새로고침합니다.
+			.then(() => { openDetail(); });
+			// 노트 수정 사항이 바로 반영되지 않는 문제 수정을 위해 수정이 되면 노트를 띄우도록 변경. 다른 방법이 있다면 알려주세요.
+			// (기존 타임라인을 강제로 업데이트하는 건 어렵나..?)
 		});
 	}
 
