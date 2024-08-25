@@ -152,6 +152,7 @@ const props = withDefaults(defineProps<{
 	autofocus?: boolean;
 	freezeAfterPosted?: boolean;
 	mock?: boolean;
+	editMode?: boolean;
 }>(), {
 	initialVisibleUsers: () => [],
 	autofocus: true,
@@ -790,6 +791,13 @@ async function post(ev?: MouseEvent) {
 		reactionAcceptance: reactionAcceptance.value,
 	};
 
+	if (props.initialNote && props.editMode) {
+		postData.updatedAt = new Date();
+		postData.updatedAtHistory = props.initialNote.updatedAtHistory;
+		postData.updatedAtHistory.push(updatedAt);
+		postData.id = props.initialNote.id;
+	}
+
 	if (withHashtags.value && hashtags.value && hashtags.value.trim() !== '') {
 		const hashtags_ = hashtags.value.trim().split(' ').map(x => x.startsWith('#') ? x : '#' + x).join(' ');
 		if (!postData.text) {
@@ -824,6 +832,77 @@ async function post(ev?: MouseEvent) {
 	}
 
 	posting.value = true;
+
+	if (props.editMode) {	
+		misskeyApi('notes/update', postData, token).then(() => {
+			if (props.freezeAfterPosted) {
+				posted.value = true;
+			} else {
+				clear();
+			}
+			nextTick(() => {
+				deleteDraft();
+				emit('posted');
+				if (postData.text && postData.text !== '') {
+					const hashtags_ = mfm.parse(postData.text).map(x => x.type === 'hashtag' && x.props.hashtag).filter(x => x) as string[];
+					const history = JSON.parse(miLocalStorage.getItem('hashtags') ?? '[]') as string[];
+					miLocalStorage.setItem('hashtags', JSON.stringify(unique(hashtags_.concat(history))));
+				}
+				posting.value = false;
+				postAccount.value = null;
+
+				incNotesCount();
+				if (notesCount === 1) {
+					claimAchievement('notes1');
+				}
+
+				const text = postData.text ?? '';
+				const lowerCase = text.toLowerCase();
+				if ((lowerCase.includes('love') || lowerCase.includes('❤')) && lowerCase.includes('misskey')) {
+					claimAchievement('iLoveMisskey');
+				}
+				if ([
+					'https://youtu.be/Efrlqw8ytg4',
+					'https://www.youtube.com/watch?v=Efrlqw8ytg4',
+					'https://m.youtube.com/watch?v=Efrlqw8ytg4',
+
+					'https://youtu.be/XVCwzwxdHuA',
+					'https://www.youtube.com/watch?v=XVCwzwxdHuA',
+					'https://m.youtube.com/watch?v=XVCwzwxdHuA',
+
+					'https://open.spotify.com/track/3Cuj0mZrlLoXx9nydNi7RB',
+					'https://open.spotify.com/track/7anfcaNPQWlWCwyCHmZqNy',
+					'https://open.spotify.com/track/5Odr16TvEN4my22K9nbH7l',
+					'https://open.spotify.com/album/5bOlxyl4igOrp2DwVQxBco',
+				].some(url => text.includes(url))) {
+					claimAchievement('brainDiver');
+				}
+
+				if (props.renote && (props.renote.userId === $i.id) && text.length > 0) {
+					claimAchievement('selfQuote');
+				}
+
+				const date = new Date();
+				const h = date.getHours();
+				const m = date.getMinutes();
+				const s = date.getSeconds();
+				if (h >= 0 && h <= 3) {
+					claimAchievement('postedAtLateNight');
+				}
+				if (m === 0 && s === 0) {
+					claimAchievement('postedAt0min0sec');
+				}
+			});
+		}).catch(err => {
+			posting.value = false;
+			os.alert({
+				type: 'error',
+				text: err.message + '\n' + (err as any).id,
+			});
+		});
+		return;
+	}
+
 	misskeyApi('notes/create', postData, token).then(() => {
 		if (props.freezeAfterPosted) {
 			posted.value = true;
