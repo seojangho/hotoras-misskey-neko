@@ -4045,7 +4045,7 @@ export type components = {
       /** Format: date-time */
       createdAt: string;
       /** Format: date-time */
-      updatedAt?: string;
+      updatedAt?: string | null;
       updatedAtHistory?: string[];
       /** Format: date-time */
       deletedAt?: string | null;
@@ -21319,7 +21319,7 @@ export type operations = {
         'application/json': {
           /** Format: misskey:id */
           noteId: string;
-          text: string;
+          text: string | null;
           fileIds?: string[];
           mediaIds?: string[];
           poll?: ({

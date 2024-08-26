@@ -29,7 +29,7 @@ export const packedNoteSchema = {
 				type: 'string',
 				optional: false, nullable: false,
 				format: 'date-time',
-			}
+			},
 		},
 		deletedAt: {
 			type: 'string',
@@ -46,7 +46,7 @@ export const packedNoteSchema = {
 			items: {
 				type: 'string',
 				optional: false, nullable: true,
-			}
+			},
 		},
 		cw: {
 			type: 'string',

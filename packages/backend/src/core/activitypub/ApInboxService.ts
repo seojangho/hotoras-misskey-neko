@@ -753,11 +753,13 @@ export class ApInboxService {
 
 	@bindThis
 	private async update(actor: MiRemoteUser, activity: IUpdate): Promise<string> {
+		const uri = getApId(activity);
+
 		if (actor.uri !== activity.actor) {
 			return 'skip: invalid actor';
 		}
 
-		this.logger.debug('Update');
+		this.logger.info(`Update: ${uri}`);
 
 		const resolver = this.apResolverService.createResolver();
 
@@ -769,6 +771,9 @@ export class ApInboxService {
 		if (isActor(object)) {
 			await this.apPersonService.updatePerson(actor.uri, resolver, object);
 			return 'ok: Person updated';
+		} else if (getApType(object) === 'Note') {
+			await this.updateNote(resolver, actor, object, false, activity);
+			return 'ok: Note updated';
 		} else if (getApType(object) === 'Question') {
 			await this.apQuestionService.updateQuestion(object, resolver).catch(err => console.error(err));
 			return 'ok: Question updated';
