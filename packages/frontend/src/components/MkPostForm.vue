@@ -794,7 +794,7 @@ async function post(ev?: MouseEvent) {
 	if (props.initialNote && props.editMode) {
 		postData.updatedAt = new Date();
 		postData.updatedAtHistory = props.initialNote.updatedAtHistory;
-		postData.updatedAtHistory.push(updatedAt);
+		postData.updatedAtHistory.push(postData.updatedAt);
 		postData.id = props.initialNote.id;
 	}
 
