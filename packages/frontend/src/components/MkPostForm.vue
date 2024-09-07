@@ -254,7 +254,7 @@ const maxTextLength = computed((): number => {
 });
 
 const canPost = computed((): boolean => {
-	return !props.mock && !posting.value && !posted.value &&
+	return ((!props.mock && !posting.value && !posted.value) || props.editMode) &&
 		(
 			1 <= textLength.value ||
 			1 <= files.value.length ||
@@ -872,7 +872,7 @@ async function post(ev?: MouseEvent) {
 		}
 	}
 
-	if (props.editMode) {	
+	if (props.editMode) {
 		misskeyApi('notes/update', postData, token).then(() => {
 			if (props.freezeAfterPosted) {
 				posted.value = true;
