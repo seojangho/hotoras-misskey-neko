@@ -2,7 +2,7 @@
 
 ### General
 - Fix: 프론트엔드의 타입 이슈
-- Feat: 노트 수정 기능 부활 (Code cherry-picked from cherrypick)
+- Feat: 노트 수정 기능 부활 (cherry-pick from libnare/shiftkey#1, 9e1b46f160159d43efaff96a53a3dc185228ecd2)
 
 ### Client
 
