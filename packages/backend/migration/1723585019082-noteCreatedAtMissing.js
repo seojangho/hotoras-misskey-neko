@@ -7,7 +7,7 @@ export class NoteCreatedAtMissing1723585019082 {
     name = 'NoteCreatedAtMissing1723585019082'
 
     async up(queryRunner) {
-        await queryRunner.query(`ALTER TABLE "note" ADD "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()`);
+        await queryRunner.query(`ALTER TABLE "note" ADD IF NOT EXISTS "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()`);
     }
     async down(queryRunner) {
         await queryRunner.query(`ALTER TABLE "note" DROP COLUMN "createdAt"`);

@@ -7,7 +7,7 @@ export class NoteEdit1724072711475 {
 	name = 'NoteEdit1724072711475'
 
 	async up(queryRunner) {
-		await queryRunner.query(`ALTER TABLE "note" ADD "updatedAt" TIMESTAMP WITH TIME ZONE`);
+		await queryRunner.query(`ALTER TABLE "note" ADD IF NOT EXISTS "updatedAt" TIMESTAMP WITH TIME ZONE`);
 	}
 
 	async down(queryRunner) {
