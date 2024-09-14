@@ -82,7 +82,6 @@ export function useNoteCapture(props: {
 				note.value.files = body.files;
 				note.value.fileIds = body.fileIds;
 				note.value.poll = body.poll;
-				note.value.emojis = body.emojis;
 				break;
 			}
 
