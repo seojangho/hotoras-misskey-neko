@@ -4045,7 +4045,8 @@ export type components = {
       /** Format: date-time */
       createdAt: string;
       /** Format: date-time */
-      updatedAt?: string | null;
+      updatedAt?: string;
+      updatedAtHistory?: string[];
       /** Format: date-time */
       deletedAt?: string | null;
       text: string | null;
@@ -4788,7 +4789,14 @@ export type components = {
       gtlAvailable: boolean;
       ltlAvailable: boolean;
       canPublicNote: boolean;
-      canEditNote: boolean | null;
+      canEditNote: boolean;
+      canInitiateConversation: boolean;
+      canCreateContent: boolean;
+      canUpdateContent: boolean;
+      canDeleteContent: boolean;
+      canPurgeAccount: boolean;
+      canUpdateAvatar: boolean;
+      canUpdateBanner: boolean;
       mentionLimit: number;
       canInvite: boolean;
       inviteLimit: number;
@@ -21311,7 +21319,7 @@ export type operations = {
         'application/json': {
           /** Format: misskey:id */
           noteId: string;
-          text: string | null;
+          text: string;
           fileIds?: string[];
           mediaIds?: string[];
           poll?: ({

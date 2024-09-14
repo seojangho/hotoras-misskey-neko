@@ -119,10 +119,7 @@ export interface NoteEventTypes {
 	};
 	updated: {
 		cw: string | null;
-		text: string | null;
-		files: Packed<'DriveFile'>[];
-		fileIds: string[];
-		poll: any | null;
+		text: string;
 	};
 	reacted: {
 		reaction: string;

@@ -3,237 +3,226 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { setImmediate } from 'node:timers/promises';
+import { setImmediate } from "timers/promises";
 import util from 'util';
-import { In, DataSource } from 'typeorm';
-import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
+import { In, DataSource, TransactionAlreadyStartedError } from 'typeorm';
+import { Inject, Injectable, OnApplicationShutdown } from "@nestjs/common";
 import * as mfm from 'mfm-js';
-import type { IMentionedRemoteUsers } from '@/models/Note.js';
-import { MiNote } from '@/models/Note.js';
-import type { NotesRepository, UsersRepository } from '@/models/_.js';
-import type { MiUser, MiLocalUser, MiRemoteUser } from '@/models/User.js';
-import { RelayService } from '@/core/RelayService.js';
-import { DI } from '@/di-symbols.js';
-import ActiveUsersChart from '@/core/chart/charts/active-users.js';
-import { GlobalEventService } from '@/core/GlobalEventService.js';
-import { UserEntityService } from '@/core/entities/UserEntityService.js';
-import { DriveFileEntityService } from '@/core/entities/DriveFileEntityService.js';
-import { ApRendererService } from '@/core/activitypub/ApRendererService.js';
-import { ApDeliverManagerService } from '@/core/activitypub/ApDeliverManagerService.js';
-import { bindThis } from '@/decorators.js';
-import { DB_MAX_NOTE_TEXT_LENGTH } from '@/const.js';
-import { SearchService } from '@/core/SearchService.js';
-import { normalizeForSearch } from '@/misc/normalize-for-search.js';
-import { MiDriveFile, MiPollVote } from '@/models/_.js';
-import { MiPoll, IPoll } from '@/models/Poll.js';
-import { concat } from '@/misc/prelude/array.js';
-import { extractHashtags } from '@/misc/extract-hashtags.js';
-import { extractCustomEmojisFromMfm } from '@/misc/extract-custom-emojis-from-mfm.js';
-import { NoteEntityService } from './entities/NoteEntityService.js';
+import type { IMentionedRemoteUsers } from "@/models/Note.js";
+import { MiNote } from "@/models/Note.js";
+import type { NotesRepository, UsersRepository } from "@/models/_.js";
+import type { MiUser, MiLocalUser, MiRemoteUser } from "@/models/User.js";
+import { RelayService } from "@/core/RelayService.js";
+import { DI } from "@/di-symbols.js";
+import ActiveUsersChart from "@/core/chart/charts/active-users.js";
+import { GlobalEventService } from "@/core/GlobalEventService.js";
+import { UserEntityService } from "@/core/entities/UserEntityService.js";
+import { ApRendererService } from "@/core/activitypub/ApRendererService.js";
+import { ApDeliverManagerService } from "@/core/activitypub/ApDeliverManagerService.js";
+import { bindThis } from "@/decorators.js";
+import { DB_MAX_NOTE_TEXT_LENGTH } from "@/const.js";
+import { SearchService } from "@/core/SearchService.js";
+import { normalizeForSearch } from "@/misc/normalize-for-search.js";
+import { MiDriveFile } from "@/models/_.js";
+import { MiPoll, IPoll } from "@/models/Poll.js";
+import { concat } from "@/misc/prelude/array.js";
+import { extractHashtags } from "@/misc/extract-hashtags.js";
+import { extractCustomEmojisFromMfm } from "@/misc/extract-custom-emojis-from-mfm.js";
+import { ApiError } from "@/server/api/error.js";
 
 type MinimumUser = {
-	id: MiUser['id'];
-	host: MiUser['host'];
-	username: MiUser['username'];
-	uri: MiUser['uri'];
+    id: MiUser['id'];
+    host: MiUser['host'];
+    username: MiUser['username'];
+    uri: MiUser['uri'];
 };
 
 type Option = {
-	updatedAt?: Date | null;
-	files?: MiDriveFile[] | null;
-	name?: string | null;
-	text?: string | null;
-	cw?: string | null;
-	apHashtags?: string[] | null;
-	apEmojis?: string[] | null;
-	poll?: IPoll | null;
+    updatedAt?: Date | null;
+    files?: MiDriveFile[] | null;
+    name?: string | null;
+    text?: string | null;
+    cw?: string | null;
+    apHashtags?: string[] | null;
+    apEmojis?: string[] | null;
+    poll?: IPoll | null;
 };
 
 @Injectable()
 export class NoteUpdateService implements OnApplicationShutdown {
-	#shutdownController = new AbortController();
+    #shutdownController = new AbortController();
 
-	constructor(
-		@Inject(DI.db)
-		private db: DataSource,
+    constructor (
+        @Inject(DI.db)
+        private db: DataSource,
 
-		@Inject(DI.usersRepository)
-		private usersRepository: UsersRepository,
+        @Inject(DI.usersRepository)
+        private usersRepository: UsersRepository,
 
-		@Inject(DI.notesRepository)
-		private notesRepository: NotesRepository,
+        @Inject(DI.notesRepository)
+        private notesRepository: NotesRepository,
 
-		private userEntityService: UserEntityService,
-		private noteEntityService: NoteEntityService,
-		private driveFileEntityService: DriveFileEntityService,
-		private globalEventService: GlobalEventService,
-		private relayService: RelayService,
-		private apDeliverManagerService: ApDeliverManagerService,
-		private apRendererService: ApRendererService,
-		private searchService: SearchService,
-		private activeUsersChart: ActiveUsersChart,
-	) { }
+        private userEntityService: UserEntityService,
+        private globalEventService: GlobalEventService,
+        private relayService: RelayService,
+        private apDeliverManagerService: ApDeliverManagerService,
+        private apRendererService: ApRendererService,
+        private searchService: SearchService,
+        private activeUsersChart: ActiveUsersChart,
+    ) {}
 
-	@bindThis
-	public async update(user: {
-		id: MiUser['id'];
-		username: MiUser['username'];
-		host: MiUser['host'];
-		isBot: MiUser['isBot'];
-	}, data: Option, note: MiNote, silent = false): Promise<MiNote | null> {
-		if (data.updatedAt == null) data.updatedAt = new Date();
+    @bindThis
+    public async update(user: {
+        id: MiUser['id'],
+        username: MiUser['username'],
+        host: MiUser['host'],
+        isBot: MiUser['isBot'],
+    }, data: Option, note: MiNote, silent = false): Promise<MiNote> {
+        if (data.updatedAt == null) data.updatedAt = new Date();
 
-		if (data.text) {
-			if (data.text.length > DB_MAX_NOTE_TEXT_LENGTH) {
-				data.text = data.text.slice(0, DB_MAX_NOTE_TEXT_LENGTH);
-			}
-			data.text = data.text.trim();
-		} else {
-			data.text = null;
-		}
+        if (data.text) {
+            if (data.text.length > DB_MAX_NOTE_TEXT_LENGTH) {
+                data.text = data.text.slice(0, DB_MAX_NOTE_TEXT_LENGTH);
+            }
+            data.text = data.text.trim();
+        } else {
+            data.text = null;
+        }
 
-		let tags = data.apHashtags;
-		let emojis = data.apEmojis;
+        let tags = data.apHashtags;
+        let emojis = data.apEmojis;
 
-		// Parse MFM if needed
-		if (!tags || !emojis) {
-			const tokens = data.text ? mfm.parse(data.text)! : [];
-			const cwTokens = data.cw ? mfm.parse(data.cw)! : [];
-			const choiceTokens = data.poll && data.poll.choices
-				? concat(data.poll.choices.map(choice => mfm.parse(choice)!))
-				: [];
+        // Parse MFM if needed
+        if (!tags || !emojis) {
+            const tokens = data.text ? mfm.parse(data.text) : [];
+            const cwTokens = data.cw ? mfm.parse(data.cw) : [];
+            const choiceTokens = data.poll && data.poll.choices
+                ? concat(data.poll.choices.map((choice: string) => mfm.parse(choice)))
+                : [];
+            
+            const combinedTokens = tokens.concat(cwTokens).concat(choiceTokens);
 
-			const combinedTokens = tokens.concat(cwTokens).concat(choiceTokens);
+            tags = data.apHashtags ?? extractHashtags(combinedTokens);
+            emojis = data.apEmojis ?? extractCustomEmojisFromMfm(combinedTokens);
+        }
 
-			tags = data.apHashtags ?? extractHashtags(combinedTokens);
+        const updatedNote = await this.updateNote(user, note, data, (tags ?? []), (emojis ?? []));
 
-			emojis = data.apEmojis ?? extractCustomEmojisFromMfm(combinedTokens);
-		}
+        if (updatedNote) {
+            setImmediate('post updated', { signal: this.#shutdownController.signal }).then(
+                () => this.postNoteUpdated(updatedNote, user, silent),
+                () => { /* Aborated: ignore this */},
+            );
+        }
 
-		tags = tags.filter(tag => Array.from(tag ?? '').length <= 128).splice(0, 32);
+        return updatedNote;
+    }
 
-		const updatedNote = await this.updateNote(user, note, data, tags, emojis);
+    @bindThis
+    private async updateNote(user: {
+        id: MiUser['id'],
+        host: MiUser['host'],
+    }, note: MiNote, data: Option, tags: string[], emojis: string[]): Promise<MiNote> {
+        if (data.updatedAt === null || data.updatedAt === undefined) {
+            data.updatedAt = new Date();
+        }
+        const updatedAtHistory = note.updatedAtHistory ?? [];
 
-		if (updatedNote) {
-			setImmediate('post updated', { signal: this.#shutdownController.signal }).then(
-				() => this.postNoteUpdated(updatedNote, user, silent),
-				() => { /* aborted, ignore this */ },
-			);
-		}
+        const values = new MiNote({
+            updatedAt: data.updatedAt,
+            fileIds: data.files ? data.files.map(file => file.id) : [],
+            text: data.text,
+            hasPoll: data.poll != null,
+            cw: data.cw ?? null,
+            tags: tags.map(tag => normalizeForSearch(tag)),
+            emojis: emojis,
+            attachedFileTypes: data.files ? data.files.map(file => file.type) : [],
+            updatedAtHistory: [...updatedAtHistory, data.updatedAt],
+            noteEditHistory: [...note.noteEditHistory, ((note.cw ? note.cw + '\n' : '') + note.text as string)],
+        });
 
-		return updatedNote;
-	}
+        try {
+            if (note.hasPoll && values.hasPoll) {
+                // start transaction
+                await this.db.transaction(async transactionalEntityManager => {
+                    await transactionalEntityManager.update(MiNote, { id: note.id }, values);
 
-	@bindThis
-	private async updateNote(user: {
-		id: MiUser['id']; host: MiUser['host'];
-	}, note: MiNote, data: Option, tags: string[], emojis: string[]): Promise<MiNote | null> {
-		const values = new MiNote({
-			updatedAt: data.updatedAt!,
-			fileIds: data.files ? data.files.map(file => file.id) : [],
-			text: data.text,
-			hasPoll: data.poll != null,
-			cw: data.cw ?? null,
-			tags: tags.map(tag => normalizeForSearch(tag)),
-			emojis,
-			attachedFileTypes: data.files ? data.files.map(file => file.type) : [],
-		});
+                    if (values.hasPoll) {
+                        const old_poll = await transactionalEntityManager.findOneBy(MiPoll, { noteId: note.id });
+                        if ((old_poll && old_poll.choices.toString() !== data.poll?.choices.toString())
+                        || (old_poll && old_poll.multiple !== data.poll?.multiple)) {
+                            await transactionalEntityManager.delete(MiPoll, { noteId: note.id });
+                            const poll = new MiPoll({
+                                noteId: note.id,
+                                choices: data.poll!.choices,
+                                expiresAt: data.poll!.expiresAt,
+                                multiple: data.poll!.multiple,
+                                votes: new Array(data.poll!.choices.length).fill(0),
+                                noteVisibility: note.visibility,
+                                userId: user.id,
+                                userHost: user.host,
+                            });
+                            await transactionalEntityManager.insert(MiPoll, poll);
+                        }
+                    }
+                });
+            } else if (!note.hasPoll && values.hasPoll) {
+                // start transaction
+                await this.db.transaction(async transactionalEntitymanager => {
+                    await transactionalEntitymanager.update(MiNote, { id: note.id }, values);
 
-		// 投稿を更新
-		try {
-			if (note.hasPoll && values.hasPoll) {
-				// Start transaction
-				await this.db.transaction(async transactionalEntityManager => {
-					await transactionalEntityManager.update(MiNote, { id: note.id }, values);
+                    if (values.hasPoll) {
+                        const poll = new MiPoll({
+                            noteId: note.id,
+                            choices: data.poll!.choices,
+                            expiresAt: data.poll!.expiresAt,
+                            multiple: data.poll!.multiple,
+                            votes: new Array(data.poll!.choices.length).fill(0),
+                            noteVisibility: note.visibility,
+                            userId: user.id,
+                            userHost: user.host,
+                        });
 
-					if (values.hasPoll) {
-						const old_poll = await transactionalEntityManager.findOneBy(MiPoll, { noteId: note.id });
-						if (old_poll?.choices.toString() !== data.poll?.choices.toString() || old_poll?.multiple !== data.poll?.multiple) {
-							await transactionalEntityManager.delete(MiPoll, { noteId: note.id });
-							await transactionalEntityManager.delete(MiPollVote, { noteId: note.id });
-							const poll = new MiPoll({
-								noteId: note.id,
-								choices: data.poll?.choices,
-								expiresAt: data.poll?.expiresAt,
-								multiple: data.poll?.multiple,
-								votes: new Array(data.poll?.choices.length).fill(0),
-								noteVisibility: note.visibility,
-								userId: user.id,
-								userHost: user.host,
-							});
-							await transactionalEntityManager.insert(MiPoll, poll);
-						}
-					}
-				});
-			} else if (!note.hasPoll && values.hasPoll) {
-				// Start transaction
-				await this.db.transaction(async transactionalEntityManager => {
-					await transactionalEntityManager.update(MiNote, { id: note.id }, values);
+                        await transactionalEntitymanager.insert(MiPoll, poll);
+                    }                    
+                });
+            } else if (note.hasPoll && !values.hasPoll) {
+                // start transaction
+                await this.db.transaction(async transactionalEntityManager => {
+                    await transactionalEntityManager.update(MiNote, { id: note.id }, values);
 
-					if (values.hasPoll) {
-						const poll = new MiPoll({
-							noteId: note.id,
-							choices: data.poll?.choices,
-							expiresAt: data.poll?.expiresAt,
-							multiple: data.poll?.multiple,
-							votes: new Array(data.poll?.choices.length).fill(0),
-							noteVisibility: note.visibility,
-							userId: user.id,
-							userHost: user.host,
-						});
+                    if (!values.hasPoll) {
+                        await transactionalEntityManager.delete(MiPoll, { noteId: note.id });
+                    }
+                });
+            } else {
+                await this.notesRepository.update({ id: note.id }, values);
+            }
 
-						await transactionalEntityManager.insert(MiPoll, poll);
-					}
-				});
-			} else if (note.hasPoll && !values.hasPoll) {
-				// Start transaction
-				await this.db.transaction(async transactionalEntityManager => {
-					await transactionalEntityManager.update(MiNote, { id: note.id }, values);
+            const updatedNote = await this.notesRepository.findOneBy({ id: note.id });
+            if (updatedNote) return updatedNote;
+            throw new ApiError({ message: 'Updated note has gone.', id: '6dffaa9b-f578-45ac-9755-9e64290b4528', code: 'NOTE_UPDATE_GONE' }, { noteId: note.id });
+        } catch (e) {
+            console.error(e); throw e;
+        }
+    }
 
-					if (!values.hasPoll) {
-						await transactionalEntityManager.delete(MiPoll, { noteId: note.id });
-					}
-				});
-			} else {
-				await this.notesRepository.update({ id: note.id }, values);
-			}
-
-			return await this.notesRepository.findOneBy({ id: note.id });
-		} catch (e) {
-			console.error(e);
-
-			throw e;
-		}
-	}
-
-	@bindThis
-	private async postNoteUpdated(note: MiNote, user: {
-		id: MiUser['id'];
-		username: MiUser['username'];
-		host: MiUser['host'];
-		isBot: MiUser['isBot'];
-	}, silent: boolean) {
+    @bindThis
+    private async postNoteUpdated (note: MiNote, user: {
+        id: MiUser['id'];
+        username: MiUser['username'];
+        host: MiUser['host'];
+        isBot: MiUser['isBot'];
+    }, silent: boolean) {
 		if (!silent) {
 			if (this.userEntityService.isLocalUser(user)) this.activeUsersChart.write(user);
 
-			const noteObj = await this.noteEntityService.pack(note, user);
-
-			console.log(noteObj);
-
-			this.globalEventService.publishNoteStream(note.id, 'updated', {
-				cw: noteObj.cw ?? null,
-				text: noteObj.text,
-				files: noteObj.files ?? [],
-				fileIds: noteObj.fileIds ?? [],
-				poll: noteObj.poll ?? null,
-			});
+			this.globalEventService.publishNoteStream(note.id, 'updated', { cw: note.cw, text: (note.text ?? '') });
 
 			//#region AP deliver
 			if (this.userEntityService.isLocalUser(user)) {
 				await (async () => {
-					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-					// @ts-expect-error
-					const noteActivity = await this.renderNoteActivity(note, user);
+					const noteActivity = await this.renderNoteActivity(note, user as MiUser);
 
 					await this.deliverToConcerned(user, note, noteActivity);
 				})();
@@ -243,9 +232,9 @@ export class NoteUpdateService implements OnApplicationShutdown {
 
 		// Register to search database
 		this.reIndex(note);
-	}
+    }
 
-	@bindThis
+    @bindThis
 	private async renderNoteActivity(note: MiNote, user: MiUser) {
 		const content = this.apRendererService.renderUpdate(await this.apRendererService.renderNote(note, false), user);
 
@@ -280,6 +269,7 @@ export class NoteUpdateService implements OnApplicationShutdown {
 
 	@bindThis
 	private async deliverToConcerned(user: { id: MiLocalUser['id']; host: null; }, note: MiNote, content: any) {
+		console.log('deliverToConcerned', util.inspect(content, { depth: null }));
 		await this.apDeliverManagerService.deliverToFollowers(user, content);
 		await this.relayService.deliverToRelays(user, content);
 		const remoteUsers = await this.getMentionedRemoteUsers(note);
