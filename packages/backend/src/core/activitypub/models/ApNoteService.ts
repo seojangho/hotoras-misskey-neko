@@ -25,7 +25,6 @@ import { bindThis } from '@/decorators.js';
 import { checkHttps } from '@/misc/check-https.js';
 import { NoteUpdateService } from '@/core/NoteUpdateService.js';
 import { IdentifiableError } from '@/misc/identifiable-error.js';
-import { NoteUpdateService } from '@/core/NoteUpdateService.js';
 import { getOneApId, getApId, getOneApHrefNullable, validPost, isEmoji, getApType } from '../type.js';
 import { ApLoggerService } from '../ApLoggerService.js';
 import { ApMfmService } from '../ApMfmService.js';
@@ -160,7 +159,7 @@ export class ApNoteService {
 		const uri = getOneApId(note.attributedTo);
 
 		// ローカルで投稿者を検索し、もし凍結されていたらスキップ
-		const cachedActor = await this.apPersonService.fetchPerson(uri) as MiRemoteUser;
+		const cachedActor = await this.apPersonService.fetchPerson(uri) as (MiRemoteUser | null);
 		if (cachedActor && cachedActor.isSuspended) {
 			throw new IdentifiableError('85ab9bd7-3a41-4530-959d-f07073900109', 'actor has been suspended');
 		}
@@ -411,82 +410,6 @@ export class ApNoteService {
 		} catch (err: any) {
 			this.logger.warn(`note update failed: ${err}`);
 			return err;
-		}
-	}
-
-	/**
-	 * Updates Note.
-	 *
-	 * If there's target Note it updates-
-	 * otherwise fetch from remote and returns.
-	 */
-
-	@bindThis
-	public async updateNote(value: string | IObject, target: MiNote, resolver?: Resolver, silent = false): Promise<MiNote | null> {
-		if (resolver == null) resolver = this.apResolverService.createResolver();
-
-		const object = await resolver.resolve(value);
-		const entryUri = getApId(value);
-
-		const err = this.validateNote(object, entryUri);
-		if (err) {
-			this.logger.error(err.message, {
-				resolver: { history: resolver.getHistory() },
-				value,
-				object,
-			});
-			throw new Error('invalid note');
-		}
-
-		const note = object as IPost;
-
-		if (note.attributedTo == null) throw new Error('invalid note.attributedTo' + note.attributedTo);
-
-		const actor = await this.apPersonService
-		.resolvePerson(getOneApId(note.attributedTo), resolver) as MiRemoteUser;
-		if (actor.isSuspended) throw new Error('actor has been suspended');
-
-		const files: MiDriveFile[] = [];
-
-		for (const attach of toArray(note.attachment)) {
-			attach.sensitive ??= note.sensitive;
-			const file = await this.apImageService.resolveImage(actor, attach);
-			if (file) files.push(file);
-		}
-
-		const cw = note.summary === '' ? null : note.summary;
-
-		let text: string | null = null;
-		if (note.source?.mediaType === 'text/x.misskeymarkdown') {
-			text = note.source.content;
-		} else if (note._misskey_content) {
-			text = note._misskey_content;
-		} else if (note.content) {
-			text = this.apMfmService.htmlToMfm(note.content, note.tag);
-		}
-
-		const apHashtags = extractApHashtags(note.tag);
-		const emojis = await this.extractEmojis(note.tag ?? [], actor.host).catch(e => {
-			this.logger.info(`extractEmojis: ${e}`); return [];
-		});
-
-		const apEmojis = emojis.map((emoji: MiEmoji) => emoji.name);
-
-		const poll = await this.apQuestionService.extractPollFromQuestion(note, resolver).catch(() => undefined);
-
-		try {
-			return await this.noteUpdateService.update(actor, {
-				updatedAt: note.updated ? new Date(note.updated) : null,
-				files: files,
-				name: note.name,
-				cw: cw,
-				text: text,
-				apHashtags: apHashtags,
-				apEmojis: apEmojis,
-				poll: poll,
-			}, target, silent);
-		} catch (err: any) {
-			this.logger.warn(`note update failed: ${err}`); return err;
 		}
 	}
 
