@@ -175,10 +175,6 @@ export function getNoteMenu(props: {
 
 	const cleanups = [] as (() => void)[];
 
-	function edit(): void {
-		os.post({ initialNote: appearNote, renote: appearNote.renote, reply: appearNote.reply, channel: appearNote.channel, updateMode: true });
-	}
-
 	function del(): void {
 		os.confirm({
 			type: 'warning',
@@ -453,11 +449,6 @@ export function getNoteMenu(props: {
 					icon: 'ti ti-edit',
 					text: i18n.ts.deleteAndEdit,
 					action: delEdit,
-				} : undefined,
-				$i.policies.canEditNote || $i.isModerator || $i.isAdmin ? {
-					icon: 'ti ti-edit',
-					text: i18n.ts.edit,
-					action: edit,
 				} : undefined,
 				{
 					icon: 'ti ti-trash',
