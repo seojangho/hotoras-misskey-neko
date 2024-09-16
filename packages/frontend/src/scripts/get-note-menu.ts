@@ -175,10 +175,6 @@ export function getNoteMenu(props: {
 
 	const cleanups = [] as (() => void)[];
 
-	function edit(): void {
-		os.post({ initialNote: appearNote, renote: appearNote.renote, reply: appearNote.reply, channel: appearNote.channel, updateMode: true });
-	}
-
 	function del(): void {
 		os.confirm({
 			type: 'warning',
@@ -221,10 +217,7 @@ export function getNoteMenu(props: {
 			text: i18n.ts.editConfirm,
 		}).then(({ canceled }) => {
 			if (canceled) return;
-			os.post({ initialNote: appearNote, renote: appearNote.renote, reply: appearNote.reply, channel: appearNote.channel, editMode: true })
-			.then(() => { openDetail(); });
-			// 노트 수정 사항이 바로 반영되지 않는 문제 수정을 위해 수정이 되면 노트를 띄우도록 변경. 다른 방법이 있다면 알려주세요.
-			// (기존 타임라인을 강제로 업데이트하는 건 어렵나..?)
+			os.post({ initialNote: appearNote, renote: appearNote.renote, reply: appearNote.reply, channel: appearNote.channel, editMode: true });
 		});
 	}
 
@@ -444,7 +437,7 @@ export function getNoteMenu(props: {
 			),
 			...(appearNote.userId === $i.id || $i.isModerator || $i.isAdmin ? [
 				{ type: 'divider' },
-				appearNote.userId === $i.id && $i.policies.canEditNote ? {
+				appearNote.userId === $i.id ? {
 					icon: 'ti ti-edit',
 					text: i18n.ts.edit,
 					action: edit,
@@ -453,11 +446,6 @@ export function getNoteMenu(props: {
 					icon: 'ti ti-edit',
 					text: i18n.ts.deleteAndEdit,
 					action: delEdit,
-				} : undefined,
-				$i.policies.canEditNote || $i.isModerator || $i.isAdmin ? {
-					icon: 'ti ti-edit',
-					text: i18n.ts.edit,
-					action: edit,
 				} : undefined,
 				{
 					icon: 'ti ti-trash',

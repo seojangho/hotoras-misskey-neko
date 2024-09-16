@@ -151,7 +151,6 @@ const props = withDefaults(defineProps<{
 	fixed?: boolean;
 	autofocus?: boolean;
 	freezeAfterPosted?: boolean;
-	updateMode?: boolean;
 	mock?: boolean;
 	editMode?: boolean;
 }>(), {
@@ -709,7 +708,7 @@ function saveDraft() {
 			visibleUserIds: visibility.value === 'specified' ? visibleUsers.value.map(x => x.id) : undefined,
 			quoteId: quoteId.value,
 			reactionAcceptance: reactionAcceptance.value,
-			noteId: props.updateMode ? props.initialNote?.id : undefined,
+			noteId: props.editMode ? props.initialNote?.id : undefined,
 		},
 	};
 
@@ -791,12 +790,12 @@ async function post(ev?: MouseEvent) {
 		visibility: visibility.value,
 		visibleUserIds: visibility.value === 'specified' ? visibleUsers.value.map(u => u.id) : undefined,
 		reactionAcceptance: reactionAcceptance.value,
-		noteId: props.updateMode ? props.initialNote?.id : undefined,
+		noteId: props.editMode ? props.initialNote?.id : undefined,
 	};
 
 	if (props.initialNote && props.editMode) {
 		postData.updatedAt = new Date();
-		postData.updatedAtHistory = props.initialNote.updatedAtHistory;
+		postData.updatedAtHistory = props.initialNote.updatedAtHistory || [];
 		postData.updatedAtHistory.push(postData.updatedAt);
 		postData.id = props.initialNote.id;
 	}
@@ -835,7 +834,7 @@ async function post(ev?: MouseEvent) {
 	}
 
 	posting.value = true;
-	misskeyApi(props.updateMode ? 'notes/update' : 'notes/create', postData, token).then(() => {
+	misskeyApi(props.editMode ? 'notes/update' : 'notes/create', postData, token).then(() => {
 		if (props.freezeAfterPosted) {
 			posted.value = true;
 		} else {
@@ -852,7 +851,7 @@ async function post(ev?: MouseEvent) {
 			posting.value = false;
 			postAccount.value = null;
 
-			if (!props.updateMode) {
+			if (!props.editMode) {
 				incNotesCount();
 				if (notesCount === 1) {
 					claimAchievement('notes1');
