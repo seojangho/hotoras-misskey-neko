@@ -321,7 +321,7 @@ rt {
 	>div:nth-child(1) {
 		font-size: 0;
 		text-align: center;
-		::after {
+		:after {
 			display: inline-block;
 			content: "너무 졸려요...";
 			margin-left: 100px;
