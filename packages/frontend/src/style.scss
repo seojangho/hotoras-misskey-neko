@@ -6,6 +6,12 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
+@font-face {
+	font-family: 'Omyu Pretty';
+	src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2304-01@1.0/omyu_pretty.woff2') format('woff2');
+	font-weight: normal; font-style: normal;
+}
+
 :root {
 	--radius: 12px;
 	--marginFull: 16px;
@@ -44,7 +50,7 @@ html {
 	accent-color: var(--accent);
 	overflow: auto;
 	overflow-wrap: break-word;
-	font-family: 'Hiragino Maru Gothic Pro', "BIZ UDGothic", Roboto, HelveticaNeue, Arial, sans-serif;
+	font-family: 'Omyu Pretty', 'Hiragino Maru Gothic Pro', "BIZ UDGothic", Roboto, HelveticaNeue, Arial, sans-serif;
 	font-size: 14px;
 	line-height: 1.35;
 	text-size-adjust: 100%;
@@ -307,7 +313,7 @@ rt {
 
 	.ti-alert-triangle {
 		display: inline-block;
-		::before {
+		&::before {
 			content: "";
 			display: inline-block;
 			background-image: url('https://data.nekoplanet.xyz/nekoplanet-storage/misskey/9ef374e9-8e6c-40f3-8aec-67e2944f10d9.webp');
@@ -321,7 +327,7 @@ rt {
 	>div:nth-child(1) {
 		font-size: 0;
 		text-align: center;
-		:after {
+		&:after {
 			display: inline-block;
 			content: "너무 졸려요...";
 			margin-left: 100px;
