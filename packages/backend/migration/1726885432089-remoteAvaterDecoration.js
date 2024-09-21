@@ -1,5 +1,10 @@
-export class RemoteAvaterDecoration1699432324194 {
-		name = 'RemoteAvaterDecoration1699432324194'
+/*
+ * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
+export class RemoteAvaterDecoration1726885432089 {
+		name = 'RemoteAvaterDecoration1726885432089'
 
     async up(queryRunner) {
 			queryRunner.query(`ALTER TABLE "avatar_decoration" ADD "remoteId" varchar(32)`);
