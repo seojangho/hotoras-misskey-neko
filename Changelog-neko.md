@@ -2,7 +2,10 @@
 
 ### General
 - Fix: 프론트엔드의 타입 이슈
-- Feat: 노트 수정 기능 부활 (Code cherry-picked from cherrypick)
+- Feat: 노트 수정 기능 부활  
+(cherry-pick from yunochi#4)
+- Feat: 리모트 아바타 데코 연합  
+(cherry-pick from yunochi#1 and 7dc3d230dda0f1ccac7e82e64c0cf4848994e1fc)
 
 ### Client
 
