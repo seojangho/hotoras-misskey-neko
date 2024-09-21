@@ -141,7 +141,7 @@ export class AvatarDecorationService implements OnApplicationShutdown {
 			body: JSON.stringify({ 'username': user.username }),
 		});
 
-		const userData: any = await res.json();
+		const userData = await res.json() as Partial<MiUser>;
 		const avatarDecorations = userData.avatarDecorations?.[0];
 
 		if (!avatarDecorations) {
@@ -159,7 +159,7 @@ export class AvatarDecorationService implements OnApplicationShutdown {
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({}),
 		});
-		const allDecorations: any = await allRes.json();
+		const allDecorations = await allRes.json() as MiAvatarDecoration[];
 		let name;
 		let description;
 		for (const decoration of allDecorations) {
@@ -176,7 +176,7 @@ export class AvatarDecorationService implements OnApplicationShutdown {
 		const decorationData = {
 			name: name,
 			description: description,
-			url: this.getProxiedUrl(avatarDecorations.url, 'static'),
+			url: this.getProxiedUrl(avatarDecorations.url as string, 'static'),
 			remoteId: avatarDecorationId,
 			host: userHost,
 		};
@@ -187,7 +187,7 @@ export class AvatarDecorationService implements OnApplicationShutdown {
 		}
 		const findDecoration = await this.avatarDecorationsRepository.findOneBy({
 			host: userHost,
-			remoteId: avatarDecorationId
+			remoteId: avatarDecorationId,
 		});
 		const updates = {} as Partial<MiUser>;
 		updates.avatarDecorations = [{

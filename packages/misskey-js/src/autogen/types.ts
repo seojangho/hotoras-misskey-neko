@@ -4045,7 +4045,7 @@ export type components = {
       /** Format: date-time */
       createdAt: string;
       /** Format: date-time */
-      updatedAt?: string | null;
+      updatedAt?: string;
       updatedAtHistory?: string[];
       /** Format: date-time */
       deletedAt?: string | null;
