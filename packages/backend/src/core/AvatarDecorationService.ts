@@ -222,7 +222,7 @@ export class AvatarDecorationService implements OnApplicationShutdown {
 	}
 
 	@bindThis
-	public async getAll(noCache = false): Promise<MiAvatarDecoration[]> {
+	public async getAll(noCache = false, withRemote = false): Promise<MiAvatarDecoration[]> {
 		if (noCache) {
 			this.cache.delete();
 			this.cacheWithRemote.delete();
