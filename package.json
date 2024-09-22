@@ -1,6 +1,6 @@
 {
 	"name": "misskey",
-	"version": "2024.9.0-alpha.3+neko-rc",
+	"version": "2024.9.0-alpha.4+neko-rc",
 	"codename": "nasubi",
 	"repository": {
 		"type": "git",
