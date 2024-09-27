@@ -1413,7 +1413,7 @@ export interface Locale extends ILocale {
      */
     "whenServerDisconnected": string;
     /**
-     * サーバーから切断されました
+     * とても眠いです···
      */
     "disconnectedFromServer": string;
     /**
