@@ -521,12 +521,12 @@ export async function getNoteMenu(props: {
 				icon: 'ti ti-device-tv',
 				text: i18n.ts.channel,
 				children: async () => {
-					const menuItems = [] as MenuItem[];
+					const channelChildMenu = [] as MenuItem[];
 
 					const channel = await misskeyApi('channels/show', { channelId: appearNote.channel!.id });
 
 					if (channel.pinnedNoteIds.includes(appearNote.id)) {
-						menuItems.push({
+						channelChildMenu.push({
 							icon: 'ti ti-pinned-off',
 							text: i18n.ts.unpin,
 							action: () => os.apiWithDialog('channels/update', {
@@ -535,7 +535,7 @@ export async function getNoteMenu(props: {
 							}),
 						});
 					} else {
-						menuItems.push({
+						channelChildMenu.push({
 							icon: 'ti ti-pin',
 							text: i18n.ts.pin,
 							action: () => os.apiWithDialog('channels/update', {
@@ -544,7 +544,7 @@ export async function getNoteMenu(props: {
 							}),
 						});
 					}
-					return menuItems;
+					return channelChildMenu;
 				},
 			});
 		}
