@@ -10,7 +10,7 @@
 
 ### develop
 
-## 2024.9.0-alpha.2+neko.rc
+## 2024.9.0+neko-rc
 
 ### General
 - Fix: 프론트엔드의 타입 이슈
@@ -18,6 +18,8 @@
 (cherry-pick from yunochi#4)
 - Feat: 리모트 아바타 데코 연합  
 (cherry-pick from yunochi#1 and 7dc3d230dda0f1ccac7e82e64c0cf4848994e1fc)
+- Style: 기본 폰트 및 스킨셋 변경
+- Feat (locale): 어딘가에 묻혀 있던 로케일 추가
 
 ### Frontend
 - Feat: "다른 계정 추가" 버튼 아래에 "새 계정 추가" 버튼이 살아 있어서 지웠습니다
